@@ -249,6 +249,7 @@ let toggleScreen = async (e) => {
         cameraButton.style.display = 'none'
 
         localScreenTracks = await AgoraRTC.createScreenVideoTrack()
+        console.log(localScreenTracks);
 
         document.getElementById(`user-container-${uid}`).remove()
         displayFrame.style.display = 'block'
@@ -337,7 +338,6 @@ console.log('====================================');
 //         noteContent = '';
 //     };
 // }
-
 // recognition.onerror = function (event) {
 //     if (event.error == 'no-speech') {
 //         console.log('Could you please repeat? I didn\'t get what you\'re saying.');
