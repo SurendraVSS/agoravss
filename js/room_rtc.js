@@ -1,7 +1,7 @@
 const APP_ID = "f34e0126cc534ec5af7629916748cda0"
 var isMuteVideo = false
 var isAudioVideo = false
-
+var isTrans = false
 let uid = sessionStorage.getItem('uid')
 if(!uid){
     uid = String(Math.floor(Math.random() * 10000))
@@ -81,29 +81,58 @@ let channelParameters =
     // remoteUid: null,
 };
 
-async function transcribe() {
-    document.getElementById('showTrans').style.display = 'flex'
+async function transcribe(e) {
+    let button = e.currentTarget
 
-    console.log('Voice recognition is on.');
-    if (transContent.length) {
-        transContent += ' ';
-    }
-    recognition.start();
+    if(isTrans == false)
+    {
+        document.getElementById('showTrans').style.display = 'flex'
+        button.classList.remove('active')
+        console.log('Voice recognition is on.');
+        if (transContent.length) {
+            transContent += ' ';
+        }
+        recognition.start();
+    
+        recognition.onresult = function (event) {
+            var current = event.resultIndex;
+            var transcript = event.results[current][0].transcript;
+            transContent = transContent + transcript + "<br>";
+            singleMessage = JSON.stringify(transContent);
+            channel.sendMessage({ text: singleMessage }).then(() => {
+                console.log("Message sent successfully.");
+                console.log("Your message was: " + singleMessage + " by " + displayName);
+                document.getElementById("actual-text").insertAdjacentHTML("afterbegin", "<br> <b>Speaker:</b> " + displayName + "<br> <b>Message:</b> " + singleMessage + "<br>");
+                transContent = ''
+            }).catch(error => {
+                console.log("Message wasn't sent due to an error: ", error);
+            });
+        };
+        isTrans = true
+    }else{
+        console.log('Voice recognition is off.');
+        document.getElementById('showTrans').style.display = 'none'
 
-    recognition.onresult = function (event) {
-        var current = event.resultIndex;
-        var transcript = event.results[current][0].transcript;
-        transContent = transContent + transcript + "<br>";
-        singleMessage = JSON.stringify(transContent);
-        channel.sendMessage({ text: singleMessage }).then(() => {
+        recognition.stop();
+        button.classList.add('active')
+        recognition.onresult = function (event) {
+          var current = event.resultIndex;
+          var transcript = event.results[current][0].transcript;
+          transContent = transContent + transcript + "<br>";
+          singleMessage = transContent;
+          channel.sendMessage({ text: singleMessage }).then(() => {
             console.log("Message sent successfully.");
-            console.log("Your message was: " + singleMessage + " by " + displayName);
-            document.getElementById("actual-text").insertAdjacentHTML("afterbegin", "<br> <b>Speaker:</b> " + displayName + "<br> <b>Message:</b> " + singleMessage + "<br>");
+            console.log("Your message was: " + singleMessage + " by " + accountName);
+            $("#actual-text").append("<br> <b>Speaker:</b> " + accountName + "<br> <b>Message:</b> " + singleMessage + "<br>");
             transContent = ''
-        }).catch(error => {
+          }).catch(error => {
             console.log("Message wasn't sent due to an error: ", error);
-        });
-    };
+          });
+        };
+        isTrans=false
+    }
+
+   
 }
 let joinStream = async () => {
     document.getElementById('join-btn').style.display = 'none'
